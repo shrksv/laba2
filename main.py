@@ -49,22 +49,26 @@ def search_for_artist(token, artist_name):
     result = requests.get(query_url, headers=headers)
     json_result = json.loads(result.content)['artists']['items']
     json_result2 = json.loads(result.content)
-    # f = open('json_result.json', 'w')
-    # json.dump(json_result2, f, indent=4, ensure_ascii = False)
     if len(json_result) == 0:
         print('No artist found')
         return None
     return json_result[0], json_result2
-
 
 def get_songs_by_artist(token, artist_id: str):
     url = f'https://api.spotify.com/v1/artists/{artist_id}/top-tracks?country=us'
     headers = get_auth_header(token)
     result = requests.get(url, headers=headers)
     json_result = json.loads(result.content)["tracks"]
-    # f = open('json_result.json', 'w')
-    # json.dump(result, f, indent=4, ensure_ascii = False)
+    f = open('json_result.json', 'w')
+    json.dump(json_result, f, indent=4, ensure_ascii = False)
     return json_result
+
+def available_markers(token, songid):
+    url = f"https://api.spotify.com/v1/tracks/{songid}"
+    headers = get_auth_header(token)
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    return json_result.get("available_markets", [])
 
 # token = get_token()
 # result = search_for_artist(token, 'ACDC')
@@ -77,14 +81,16 @@ def main():
     result, info = search_for_artist(token, artist_name)
     artist_id = result["id"]
     songs = get_songs_by_artist(token, artist_id)
+    avaliable_marker = available_markers(token, songs[0]['id'])
     print("What do you want to know about that artist:\n\
           1. Famous song\n\
           2. Artist ID\n\
-          3. Count of tracks\n\
-          4. Genre")
+          3. Original name\n\
+          4. Genre\n\
+          5. Markers")
     num = input(">>> ")
     if num.isdigit():
-        if num in ['1','2','3','4']:
+        if num in ['1','2','3','4', '5']:
             if num == "1":
                 print(f"Their famous song is : '{songs[0]['name']}'")
                 return None
@@ -92,12 +98,14 @@ def main():
                 print(f"Artist id is: {artist_id}")
                 return None
             if num == "3":
-                print(f"Total songs: {len(songs)}")
+                print(f"Original name: {songs[0]['album']['artists'][0]['name']}")
                 return None
             if num == "4":
                 print(f"Genres: {result['genres']}")
                 return None
-
+            if num == "5":
+                print(f"Markers: {avaliable_marker}")
+                return None
     print("Incorrect number")
     return None
 
